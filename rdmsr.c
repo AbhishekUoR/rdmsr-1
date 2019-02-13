@@ -2,22 +2,33 @@
 
 void usage(void)
 {
-  printf("rdmsr ... exiting\n");
+  printf("rdmsr: use Linux /proc/cpu/msr file to read or write Intel MSR values\n");
+  printf("\t--cpu <number> cpu number: required (zero-indexed, base 10)\n");
+  printf("\t--msr <number> MSR number to read (default) or write: required (base 16)\n");
+  printf("\t--value <number> MSR number to write: optional (base 16)\n\n");
+  printf("\tIf value is specified, will attempt to write the MSR, otherwise will attempt to read\n");
+  printf("\tRequires root privilege on most Linux systems.\n");
+
   exit(0);
 }
 
+int cpu = 0;
+off_t msr = 0;
+uint64_t value = 0;
 
 static void get_options(int argc, char **argv)
 {
-   if (argc < 2)
+   if (argc < 4)
       usage();
 
    while (1) {
       int c = -1;
       char *end = NULL;
-      (void)end;
 
       static struct option long_options[] = {
+        {"cpu", required_argument, NULL, 0},
+        {"msr", required_argument, NULL, 1},
+        {"value", required_argument, NULL, 2},
         {"help", no_argument, NULL, 0},
         {0, 0, 0, 0}
       };
@@ -37,8 +48,35 @@ static void get_options(int argc, char **argv)
       switch(option_index)
       {
       case 0:
+      {
+        /**  --cpu <number> in decimal **/
+        if (!(cpu = strtol(optarg, &end, 10)) || errno == ERANGE)
+        {
+          printf("error storing cpu number (base 10)\n");
+          usage();
+        }
         break;
-
+      }
+      case 1:
+      {
+        /** --msr <number> in hex **/
+        if (!(msr = strtol(optarg, &end, 16)) || errno == ERANGE)
+        {
+          printf("error storing msr number (base 16)\n");
+          usage();
+        }
+        break;
+      }
+      case 2:
+      {
+        /** --value <number> in hex **/
+        if (!(value = strtol(optarg, &end, 16)) || errno == ERANGE)
+        {
+          printf("error storing value (base 16)\n");
+          usage();
+        }
+        break;
+      }
       default:
         usage();
         break;
@@ -50,6 +88,22 @@ int main(int argc, char **argv)
 {
   get_options(argc, argv);
 
+  if (value)
+  {
+    if(write_msr(cpu, msr, value))
+    {
+      perror("error writing MSR");
+      exit(0);
+    }
+    exit(1);
+  }
+
+  if (read_msr(cpu, msr, &value))
+  {
+    perror("error reading MSR");
+    exit(0);
+  }
+  printf("value: %0lx\n", value);
   return 1;
 }
 
