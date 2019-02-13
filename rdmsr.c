@@ -104,7 +104,7 @@ int main(int argc, char **argv)
     perror("error reading MSR");
     exit(0);
   }
-  printf("value: %0lx\n", value);
+  printf("value: %016lx\n", value);
   return 1;
 }
 
