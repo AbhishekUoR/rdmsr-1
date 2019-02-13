@@ -3,7 +3,7 @@
 void usage(void)
 {
   printf("rdmsr: use Linux /proc/cpu/msr file to read or write Intel MSR values\n");
-  printf("\t--cpu <number> cpu number: required (zero-indexed, base 10)\n");
+  printf("\t--cpu <number> cpu number: required (ONE-indexed, base 10)\n");
   printf("\t--msr <number> MSR number to read (default) or write: required (base 16)\n");
   printf("\t--value <number> MSR number to write: optional (base 16)\n\n");
   printf("\tIf value is specified, will attempt to write the MSR, otherwise will attempt to read\n");
@@ -18,7 +18,7 @@ uint64_t value = 0;
 
 static void get_options(int argc, char **argv)
 {
-   if (argc < 4)
+   if (argc < 3)
       usage();
 
    while (1) {
@@ -55,6 +55,7 @@ static void get_options(int argc, char **argv)
           printf("error storing cpu number (base 10)\n");
           usage();
         }
+        cpu--; /** convert to zero-indexed **/
         break;
       }
       case 1:
